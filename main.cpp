@@ -32,6 +32,9 @@ public:
 
 std::vector<Object *> init_scene_1(){
     std::vector<Object *> scene;
+    scene.push_back(new Object(new Rectangle(Vec_3d(-5, 0, 25), Vec_3d(0, 0, 5), Vec_3d(0, 3, 0)), new Reflecting, "Mirror_1"));
+    scene.push_back(new Object(new Rectangle(Vec_3d( 5, 0, 25), Vec_3d(0, 0, 5), Vec_3d(0, 3, 0)), new Reflecting, "Mirror_2"));
+
     scene.push_back(new Object(new Ball(Vec_3d(-2, 0, 25), 1.5), new Matted,     "ball_1"));
     scene.push_back(new Object(new Ball(Vec_3d( 2, 0, 25), 1.5), new Reflecting, "ball_2"));
     scene.push_back(new Object(new Lens(Vec_3d( 0, 0,  10), Vec_3d(0, 0, 1), 3, 12, 1E6), new Refracting(3), "lens_1"));
@@ -72,7 +75,7 @@ void print_ppm(Pixel *pixels, int width, int height, std::string name){
 int main()
 {
     double eps = 1E-6;
-    size_t ray_amm = 1E10;
+    size_t ray_amm = 1E9;
     size_t hit_count = 0;
 
     size_t width = 1080, height = 1080;
@@ -84,7 +87,7 @@ int main()
     scene.push_back(&screen);
 
     for (size_t i=1; i<=ray_amm; ++i){
-        Photon photon = source(Vec_3d(0, 5, 24), 0.5);
+        Photon photon = source(Vec_3d(0, 3, 24), 0.3);
         //Photon photon(Vec_3d(3.0 * i/ray_amm, 0.5, 20), Vec_3d(0, 0, -1));
 
         Object *closest_obj = nullptr;
@@ -136,12 +139,14 @@ int main()
             std::cout << hit_count << "\n";
             std::cout << "\n";
         }
-        if (i%(ray_amm/100) == 0){
-            print_ppm(pixels, width, height, "pic");
-        }
+//        if (i%(ray_amm/100) == 0){
+//            print_ppm(pixels, width, height, "pic");
+//        }
     }
 
     std::cout << "\n" << hit_count;
+
+    print_ppm(pixels, width, height, "pic");
 
     scene.pop_back();
     screen.shape = nullptr;
