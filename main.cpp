@@ -32,12 +32,13 @@ public:
 
 std::vector<Object *> init_scene_1(){
     std::vector<Object *> scene;
-    scene.push_back(new Object(new Rectangle(Vec_3d(-5, 0, 25), Vec_3d(0, 0, 5), Vec_3d(0, 3, 0)), new Reflecting, "Mirror_1"));
-    scene.push_back(new Object(new Rectangle(Vec_3d( 5, 0, 25), Vec_3d(0, 0, 5), Vec_3d(0, 3, 0)), new Reflecting, "Mirror_2"));
+    scene.push_back(new Object(new Rectangle(Vec_3d(-5, 0, 25), Vec_3d(0, 0, 30), Vec_3d(0, 3, 0)), new Reflecting, "Mirror_1"));
+    scene.push_back(new Object(new Rectangle(Vec_3d( 5, 0, 25), Vec_3d(0, 0, 30), Vec_3d(0, 3, 0)), new Reflecting, "Mirror_2"));
+    scene.push_back(new Object(new Rectangle(Vec_3d( 2, 0, 50), Vec_3d(0.1, 0, -0.995), Vec_3d(0, 2, 0)), new Matted, "Mirror_2"));
 
-    scene.push_back(new Object(new Ball(Vec_3d(-2, 0, 25), 1.5), new Matted,     "ball_1"));
-    scene.push_back(new Object(new Ball(Vec_3d( 2, 0, 25), 1.5), new Reflecting, "ball_2"));
-    scene.push_back(new Object(new Lens(Vec_3d( 0, 0,  10), Vec_3d(0, 0, 1), 3, 12, 1E6), new Refracting(3), "lens_1"));
+    //scene.push_back(new Object(new Ball(Vec_3d(-2, 0, 25), 1.5), new Matted,     "ball_1"));
+    //scene.push_back(new Object(new Ball(Vec_3d( 2, 0, 25), 1.5), new Reflecting, "ball_2"));
+    scene.push_back(new Object(new Lens(Vec_3d(0, 0, 0), Vec_3d(0, 0, 1), 1.5, 10, 10), new Refracting(1.5), "lens_1"));
 
     return scene;
 }
@@ -75,20 +76,20 @@ void print_ppm(Pixel *pixels, int width, int height, std::string name){
 int main()
 {
     double eps = 1E-6;
-    size_t ray_amm = 1E9;
+    size_t ray_amm = 1E8;
     size_t hit_count = 0;
 
-    size_t width = 1080, height = 1080;
+    size_t width = 1080, height = 540;
     Pixel *pixels = new Pixel[width*height];
 
     std::vector<Object *> scene = init_scene_1();
-    Rectangle rect(Vec_3d(0, 0, 0), Vec_3d(5, 0, 0), Vec_3d(0, 5, 0));
+    Rectangle rect(Vec_3d(0, 0, -12.5), Vec_3d(10, 0, 0), Vec_3d(0, 5, 0));
     Object screen(&rect, new Absorbing, "scene");
     scene.push_back(&screen);
 
     for (size_t i=1; i<=ray_amm; ++i){
-        Photon photon = source(Vec_3d(0, 3, 24), 0.3);
-        //Photon photon(Vec_3d(3.0 * i/ray_amm, 0.5, 20), Vec_3d(0, 0, -1));
+        Photon photon = source(Vec_3d(0, 0, 50), 0.0);
+        //Photon photon(Vec_3d(-2.0 * 4.0 * i/ray_amm, 0.3, 50), Vec_3d(0, 0, -1));
 
         Object *closest_obj = nullptr;
         size_t itr = 0;
@@ -130,7 +131,7 @@ int main()
             size_t screen_x = rel_x * width;
             size_t screen_y = rel_y * height;
 
-            pixels[screen_x + height * screen_y].add(1, 0, 0);
+            pixels[screen_x + height * screen_y].add(10, 0, 0);
         }
 
         if (i%10000 == 0){

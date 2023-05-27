@@ -26,8 +26,8 @@ public:
 
     double dist(Photon photon){
         double ans = - (dir_normal * (photon.pos - pos))/(dir_normal * photon.dir);
-        Vec_3d delta_pos = photon.pos + ans*photon.dir - pos;
-        if( ans < 0 || sqr(delta_pos * a) > sqr(a.sqr()) || sqr(delta_pos * b) > sqr(b.sqr())){
+        Vec_3d hit_pos = photon.pos + ans*photon.dir - pos;
+        if( ans < 0 || sqr(hit_pos * a) > sqr(a.sqr()) || sqr(hit_pos * b) > sqr(b.sqr())){
             return std::numeric_limits<double>::infinity();
         }
         return ans;
