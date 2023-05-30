@@ -74,6 +74,26 @@ std::ostream& operator<<(std::ostream &os, const Vec_3d &rha) {
     return os;
 }
 
+
+Vec_3d rotate_a_to_b(Vec_3d a, Vec_3d b, Vec_3d p){
+    a /= a.len();
+    b /= b.len();
+    if((a-b).sqr() == 0){return  p;}
+    if((a+b).sqr() == 0){return -p;}
+    double a_dot_b = a * b;
+    double inv_sin_sqr = 1 / (1 - sqr(a_dot_b));
+    double p_dot_a = p * a;
+    double p_dot_b = p * b;
+
+    double a_part = (p_dot_a - p_dot_b * a_dot_b) * inv_sin_sqr;
+    double b_part = (p_dot_b - p_dot_a * a_dot_b) * inv_sin_sqr;
+
+    Vec_3d normal_part  = p - (a_part * a + b_part * b);
+    Vec_3d rotated_part = -b_part * a + (a_part + 2 * a_dot_b * b_part) * b;
+
+    return normal_part + rotated_part;
+}
+
 ///
 double sqr(double x){
     return x*x;

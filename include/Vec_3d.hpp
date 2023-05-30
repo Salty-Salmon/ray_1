@@ -39,6 +39,8 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Vec_3d& rha);
 };
 
+Vec_3d rotate_a_to_b(Vec_3d a, Vec_3d b, Vec_3d p);
+
 double rand_uns(double min, double max);
 Vec_3d rand_unit_vec();
 double sqr(double x);

@@ -11,6 +11,15 @@ public:
     virtual void interact(Photon &photon, Vec_3d normal) = 0;
 };
 
+class Transparent: public Material{
+private:
+
+public:
+    void interact(Photon &photon, Vec_3d normal){
+
+    };
+};
+
 class Absorbing: public Material{
 private:
 
@@ -26,6 +35,19 @@ private:
 public:
     void interact(Photon &photon, Vec_3d normal){
         photon.dir = rand_unit_vec();
+    };
+};
+
+class Strictly_matted: public Material{
+private:
+
+public:
+    void interact(Photon &photon, Vec_3d normal){
+        Vec_3d new_dir = rand_unit_vec();
+        if ( (new_dir * normal) * (photon.dir * normal) > 0 ){
+            new_dir = -new_dir;
+        }
+        photon.dir = new_dir;
     };
 };
 
