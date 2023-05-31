@@ -41,9 +41,6 @@ Shape_base *make_lens(Vec_3d pos, Vec_3d dir, double r_1, double r_2, double r_s
 }
 
 std::vector<Object *> init_scene_1(){
-    Shape_base *lens_shape = make_lens(Vec_3d(-30, 0, 5), Vec_3d(1, 0, 0), 15, 15, 4);
-    Object *lens_1 = new Object(lens_shape, new Refracting(2.5), "lens_1");
-
     Shape_cylinder     *cylinder_1 = new Shape_cylinder(Vec_3d(0, 0, 0), Vec_3d(0, 0, 1), 2);
     Shape_plane        *plane_1    = new Shape_plane(Vec_3d(0, 0, 8), Vec_3d(2, -1, -1));
     Shape_intersection *inter_1    = new Shape_intersection(cylinder_1, plane_1);
@@ -56,25 +53,21 @@ std::vector<Object *> init_scene_1(){
     Object *obj_1 = new Object(union_1, new Strictly_matted, "obj_1");
 
     std::vector<Object *> scene;
-    scene.push_back(lens_1);
     scene.push_back(obj_1);
     return scene;
 }
 
 std::vector<Object *> init_scene_2(){
-    Shape_base *lens_shape = make_lens(Vec_3d(-30, -5, 5), Vec_3d(1, 0, 0), 15, 15, 5);
-    Object *lens_1 = new Object(lens_shape, new Refracting(2.5), "lens_1");
-
     Shape_plane *plane_1 = new Shape_plane(Vec_3d(0, 0, 0), Vec_3d(0, 0, -1));
     Object *obj_1 = new Object(plane_1, new Strictly_matted, "obj_1");
 
-    Shape_cylinder     *cylinder_1 = new Shape_cylinder(Vec_3d(0, 0, 0), Vec_3d(0, 0, 1), 4);
-//    Shape_plane        *plane_1    = new Shape_plane(Vec_3d(0, 0, 8), Vec_3d(2, -1, -1));
-//    Shape_intersection *inter_1    = new Shape_intersection(cylinder_1, plane_1);
-    Object *obj_2 = new Object(cylinder_1, new Refracting(1.5), "obj_2");
+    Shape_cylinder     *cylinder_1 = new Shape_cylinder(Vec_3d(    0, 0.0, 0.0), Vec_3d(0, 0, 1), 4);
+    Shape_cylinder     *cylinder_2 = new Shape_cylinder(Vec_3d( -0.1, 0.0, 0.0), Vec_3d(0, 0, 1), 4);
+    Shape_inversion   *invertion_1 = new Shape_inversion(cylinder_2);
+    Shape_intersection    *inter_1 = new Shape_intersection(cylinder_1, invertion_1);
+    Object *obj_2 = new Object(inter_1, new Strictly_matted, "obj_2");
 
     std::vector<Object *> scene;
-    scene.push_back(lens_1);
     scene.push_back(obj_1);
     scene.push_back(obj_2);
     return scene;
@@ -125,24 +118,68 @@ void print_ppm(Pixel *pixels, int width, int height, std::string name){
     out.close();
 }
 
+std::pair<Screen, Object *> make_camera(Vec_3d center, Vec_3d dir, double focus){
+    dir /= dir.len();
+    double r_1 = 15;
+    double r_2 = 15;
+    double refr_ind = 2.5;
+    double focal_dist = 1 / ((refr_ind - 1) * (1/r_1 + 1/r_2));
+    double lens_dist = (focus - std::sqrt(sqr(focus) - 4*focus*focal_dist)) / 2;
+
+    Shape_base *lens_shape = make_lens(center + lens_dist * dir, dir, r_1, r_2, 4);
+    Object *lens_1 = new Object(lens_shape, new Refracting(2.5), "lens_1");
+
+    double screen_width  = 3;
+    double screen_height = 3;
+
+    Vec_3d screen_a(0, screen_width, 0);
+    Vec_3d screen_b(0, 0, screen_height);
+
+    Vec_3d z_axis(0, 0, 1);
+    Vec_3d dir_hor = dir - (dir*z_axis)*z_axis / z_axis.sqr();
+
+    screen_a = rotate_a_to_b(Vec_3d(1, 0, 0), dir_hor, screen_a);
+    screen_b = rotate_a_to_b(Vec_3d(1, 0, 0), dir_hor, screen_b);
+    Vec_3d dir_ver = rotate_a_to_b(Vec_3d(1, 0, 0), dir_hor, dir);
+
+    screen_a = rotate_a_to_b(Vec_3d(1, 0, 0), dir_ver, screen_a);
+    screen_b = rotate_a_to_b(Vec_3d(1, 0, 0), dir_ver, screen_b);
+
+    Screen screen(center, screen_a, screen_b);
+
+    return std::make_pair(screen, lens_1);
+}
+
 int main()
 {
     double eps = 1E-6;
-    size_t ray_amm = 2E8;
+    size_t ray_amm = 1E8;
     size_t hit_count = 0;
 
     size_t width = 640, height = 640;
     Pixel *pixels = new Pixel[width*height]();
 
+//    std::ifstream in("pic.ppm");
+//    {
+//        std::string line_1;
+//        std::getline(in, line_1);
+//    }
+//    for (size_t i=0; i<width*height; ++i){
+//            in >> pixels[i].r >> pixels[i].g >> pixels[i].b;
+//            std::cout << pixels[i].r << " " << pixels[i].g << " " << pixels[i].b << "\n";
+//    }
+//    in.close();
+
     std::vector<Object *> scene = init_scene_2();
-    Vec_3d screen_pos = Vec_3d(-30, -5, 5) - 6 * (Vec_3d(1, 0, 0) / Vec_3d(1, 0, 0).len());
-    Screen screen(screen_pos, Vec_3d(0, 3, 0), Vec_3d(0, 0, -3));
+
+    std::pair<Screen, Object *> camera = make_camera(Vec_3d(-32, 0, 4), Vec_3d(1, 0, 0), 30);
+
+    Screen screen = camera.first;
+    scene.push_back(camera.second);
 
     for (size_t i=1; i<=ray_amm; ++i){
         //Photon photon = source(Vec_3d(0, 10, 10), 0);
-        Photon photon = cone_source(Vec_3d(0, 20, 20), Vec_3d(0, -20, 4-20), std::acos(0)/3 );
-        //Photon photon(Vec_3d(-10, 20, 20), Vec_3d(7, -15, -20) + 10 * rand_unit_vec());
-
+        Photon photon = cone_source(Vec_3d(-30, 0, 60), Vec_3d(30, 0, -40), std::acos(0)/15 );
 
         size_t itr = 0;
         while (photon.alive && itr < 10) {
@@ -174,16 +211,18 @@ int main()
 
                 ++hit_count;
 
-                double rel_x = ( 1.0 * ((photon.pos - screen.pos) * screen.a) / screen.a.sqr() + 1.0) / 2.0;
-                double rel_y = (-1.0 * ((photon.pos - screen.pos) * screen.b) / screen.b.sqr() + 1.0) / 2.0;
+                double rel_x = (-1.0 * ((photon.pos - screen.pos) * screen.a) / screen.a.sqr() + 1.0) / 2.0;
+                double rel_y = ( 1.0 * ((photon.pos - screen.pos) * screen.b) / screen.b.sqr() + 1.0) / 2.0;
 
                 size_t screen_x = rel_x * width;
                 size_t screen_y = rel_y * height;
 
-                pixels[screen_x + width * screen_y].add(16, 0, 0);
+                pixels[screen_x + width * screen_y].add(0, 3, 0);
                 photon.alive = false;
             }else if (closest_obj != nullptr){
-                //std::cout << min_dist_sqr << "\n";
+//                if (closest_obj->name == "obj_2"){
+//                    std::cout << closest_normal << "\n";
+//                }
 
                 photon.pos = closest_inter;
                 closest_obj->interact(photon, closest_normal);
@@ -195,9 +234,10 @@ int main()
         }
 
         if (i%100000 == 0){
-            std::cout << i << "\n";
             std::cout << 100.0 * i/ray_amm << "%" << "\n";
+            std::cout << i << "\n";
             std::cout << hit_count << "\n";
+            std::cout << 1.0 * hit_count/i << "\n";
             std::cout << "\n";
         }
         if (i%(10 * ray_amm/100) == 0){

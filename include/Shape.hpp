@@ -71,7 +71,7 @@ public:
             double dist = ( -scalar_radial + sign*std::sqrt(discriminant)) / dir_radial.sqr();
             if (dist > 0) {
                 Vec_3d pos_inter = photon.pos + dist * photon.dir;
-                Vec_3d normal = pos_radial + dist * dir;
+                Vec_3d normal = pos_radial + dist * dir_radial;
                 normal /= normal.len();
                 ans.push_back(std::make_pair(pos_inter, normal));
             }
