@@ -29,21 +29,49 @@ public:
     };
 };
 
-class Matted: public Material{
+class Lambertian: public Material{
 private:
 
 public:
     void interact(Photon &photon, Vec_3d normal){
-        photon.dir = rand_unit_vec();
+        double phi = rand_uns(0, 4*std::acos(0));
+        double cos_phi = std::cos(phi);
+        double sin_phi = std::sin(phi);
+
+        double theta = std::acos(std::sqrt(rand_uns(0, 1)));
+        double cos_theta = std::cos(theta);
+        double sin_theta = std::sin(theta);
+
+        Vec_3d deviation(sin_theta * cos_phi, sin_theta * sin_phi, cos_theta);
+        Vec_3d new_dir = rotate_a_to_b(Vec_3d(0, 0, 1), normal, deviation);
+
+        if ( (new_dir * normal) * (photon.dir * normal) > 0 ){
+            new_dir = -new_dir;
+        }
+        photon.dir = new_dir;
     };
 };
 
-class Strictly_matted: public Material{
+class Lambertian_cos: public Material{
 private:
 
 public:
+    double pow_index;
+
+    Lambertian_cos(double pow_index):pow_index(pow_index) {};
+
     void interact(Photon &photon, Vec_3d normal){
-        Vec_3d new_dir = rand_unit_vec();
+        double phi = rand_uns(0, 4*std::acos(0));
+        double cos_phi = std::cos(phi);
+        double sin_phi = std::sin(phi);
+
+        double theta = std::acos(std::pow(rand_uns(0, 1), 1/(2+pow_index)));
+        double cos_theta = std::cos(theta);
+        double sin_theta = std::sin(theta);
+
+        Vec_3d deviation(sin_theta * cos_phi, sin_theta * sin_phi, cos_theta);
+        Vec_3d new_dir = rotate_a_to_b(Vec_3d(0, 0, 1), normal, deviation);
+
         if ( (new_dir * normal) * (photon.dir * normal) > 0 ){
             new_dir = -new_dir;
         }
